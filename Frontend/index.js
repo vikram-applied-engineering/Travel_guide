@@ -164,7 +164,7 @@ const BACKEND_URL =
     location.protocol === "file:"
   )
     ? "http://127.0.0.1:5000"
-    : "https://YOUR-BACKEND-NAME.onrender.com";
+    : "https://travel-guide-backend-1znn.onrender.com";
 
 const GENERATE_AUDIO_GUIDE_API_URL =
   `${BACKEND_URL}/generate-audio-guide`;
