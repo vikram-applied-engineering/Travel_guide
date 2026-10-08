@@ -22,6 +22,7 @@ const state = {
   voice: 'Male'
 };
 
+
 // --- DOM Elements ---
 const cardsContainer = document.querySelector('.cards');
 const experiencePanel = document.getElementById('experience');
@@ -39,6 +40,7 @@ const transcriptToggle = document.getElementById('transcriptToggle');
 const transcriptContent = document.getElementById('transcriptContent');
 const transcriptArrow = document.getElementById('transcriptArrow');
 
+
 // --- Functions ---
 
 function selectDestination(place, image, clickedCard = null) {
@@ -50,7 +52,10 @@ function selectDestination(place, image, clickedCard = null) {
   cardsContainer.classList.add('faded');
 
   // Reset previous states
-  document.querySelectorAll('.place-card').forEach(card => card.classList.remove('active'));
+  document
+    .querySelectorAll('.place-card')
+    .forEach(card => card.classList.remove('active'));
+
   searchPreviewCard.classList.add('hidden');
 
   // Handle Card Visibility
@@ -73,10 +78,12 @@ function selectDestination(place, image, clickedCard = null) {
 
   // Show Panel with animation
   experiencePanel.classList.remove('hidden');
+
   setTimeout(() => {
     experiencePanel.classList.add('visible');
   }, 10);
 }
+
 
 function deselectDestination() {
   experiencePanel.classList.remove('visible');
@@ -86,46 +93,84 @@ function deselectDestination() {
     experiencePanel.classList.add('hidden');
     cardsContainer.classList.remove('faded');
     searchPreviewCard.classList.add('hidden');
-    document.querySelectorAll('.place-card').forEach(card => card.classList.remove('active'));
+
+    document
+      .querySelectorAll('.place-card')
+      .forEach(card => card.classList.remove('active'));
   }, 300);
 }
+
 
 // --- Event Listeners ---
 
 // Close Button
 closeButton.addEventListener('click', deselectDestination);
 
-// Card Clicks
-document.querySelectorAll('.place-card:not(.search-preview-card)').forEach(card => {
-  card.addEventListener('click', () => {
-    selectDestination(card.dataset.place, card.dataset.image, card);
-  });
-});
 
-// Option Toggles (History Type)
-const lengthButtons = document.querySelectorAll('[data-group="length"] button');
+// Card Clicks
+document
+  .querySelectorAll('.place-card:not(.search-preview-card)')
+  .forEach(card => {
+    card.addEventListener('click', () => {
+      selectDestination(
+        card.dataset.place,
+        card.dataset.image,
+        card
+      );
+    });
+  });
+
+
+// --- Option Toggles (History Type) ---
+
+const lengthButtons = document.querySelectorAll(
+  '[data-group="length"] button'
+);
+
 lengthButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     lengthButtons.forEach(b => b.classList.remove('active'));
+
     btn.classList.add('active');
+
     state.length = btn.dataset.value;
   });
 });
 
-// Option Toggles (Voice Gender)
-const voiceButtons = document.querySelectorAll('[data-group="voice"] button');
+
+// --- Option Toggles (Voice Gender) ---
+
+const voiceButtons = document.querySelectorAll(
+  '[data-group="voice"] button'
+);
+
 voiceButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     voiceButtons.forEach(b => b.classList.remove('active'));
+
     btn.classList.add('active');
+
     state.voice = btn.dataset.value;
   });
 });
 
 
-// Generate Audio guide button Logic
+// --- Backend API URL ---
 
-const GENERATE_AUDIO_GUIDE_API_URL = "http://127.0.0.1:5000/generate-audio-guide";
+const BACKEND_URL =
+  (
+    location.hostname === "localhost" ||
+    location.hostname === "127.0.0.1" ||
+    location.protocol === "file:"
+  )
+    ? "http://127.0.0.1:5000"
+    : "https://YOUR-BACKEND-NAME.onrender.com";
+
+const GENERATE_AUDIO_GUIDE_API_URL =
+  `${BACKEND_URL}/generate-audio-guide`;
+
+
+// --- Generate Audio Guide Button Logic ---
 
 generateButton.addEventListener('click', async () => {
   generateButton.disabled = true;
@@ -135,46 +180,77 @@ generateButton.addEventListener('click', async () => {
     const selectedLanguage = languageSelect.value;
     const selectedVoice = state.voice;
 
-    const response = await fetch(GENERATE_AUDIO_GUIDE_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        place: state.place,
-        answerType: state.length,
-        language: selectedLanguage,
-        voiceId: VOICES[selectedLanguage][selectedVoice],
-        locale: LOCALES[selectedLanguage]
-      })
-    });
+    const response = await fetch(
+      GENERATE_AUDIO_GUIDE_API_URL,
+      {
+        method: 'POST',
 
-    if (!response.ok) throw new Error('Generation failed');
+        headers: {
+          'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+          place: state.place,
+          answerType: state.length,
+          language: selectedLanguage,
+          voiceId: VOICES[selectedLanguage][selectedVoice],
+          locale: LOCALES[selectedLanguage]
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Generation failed');
+    }
 
     const data = await response.json();
 
     // Update UI with Result
     transcriptText.textContent = data.description;
+
     audioSection.classList.remove('hidden');
 
+    // If audio was successfully generated
     if (data.audioBase64) {
-      audioPlayer.src = `data:audio/mp3;base64,${data.audioBase64}`;
+
+      audioPlayer.src =
+        `data:audio/mp3;base64,${data.audioBase64}`;
+
       audioPlayer.load();
+
       audioPlayer.classList.remove('hidden');
+
       generateButton.textContent = 'Listen to Audio';
+
     } else {
+
       audioPlayer.classList.add('hidden');
+
       generateButton.textContent = 'Audio Not Available';
     }
 
   } catch (err) {
+
     console.error(err);
-    alert('Generation failed. Please check your connection.');
-    generateButton.textContent = 'Generate Audio Guide';
+
+    alert(
+      'Generation failed. Please check your connection.'
+    );
+
+    generateButton.textContent =
+      'Generate Audio Guide';
+
     generateButton.disabled = false;
   }
 });
 
-// Transcript Toggle
+
+// --- Transcript Toggle ---
+
 transcriptToggle.addEventListener('click', () => {
+
   transcriptContent.classList.toggle('hidden');
+
   transcriptArrow.classList.toggle('rotate-180');
+
 });
